@@ -1,4 +1,23 @@
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;
+; Daniel Campoverde Carrión [alx741]
+; <alx741@riseup.net>
+
+
+
     list p=16f876A
+
 
 ; Declaración de direcciones de memoria
 ; Datasheet pagina 17, figura 2-3
@@ -35,22 +54,6 @@ VAR4       EQU 0x190
 ; Datasheet pagina 31
 INDF       EQU 0x0
 FSR        EQU 0x04
-
-; Variables propias a usarse en el programa
-LECTURA1   EQU D'40'
-LAZOS1     EQU 0x7F
-LECTURA2   EQU D'40'
-LAZOS2     EQU 0x7E
-LECTURA3   EQU D'48'
-LAZOS3     EQU 0x7D
-LECTURA4   EQU D'48'
-LAZOS4     EQU 0x7C
-GRU        EQU 0x15
-MED        EQU 0x20
-FIN        EQU 0x20
-REG1       EQU 0x22
-REG2       EQU 0x23
-REG3       EQU 0x24
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
