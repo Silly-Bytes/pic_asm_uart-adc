@@ -30,6 +30,10 @@ Este post se deberá leer en paralelo junto con el *datasheet* del
 microcontrolador en cuestión **PIC16F876A** que se puede encontrar aquí:
 http://ww1.microchip.com/downloads/en/DeviceDoc/39582C.pdf
 
+Además tener en cuenta los pines del microcontrolador:
+
+
+
 El código completo [se encuentra
 aquí](https://github.com/Silly-Bytes/pic_asm_uart-adc/blob/master/code.asm).
 
@@ -99,3 +103,24 @@ necesario *cambiarnos* al banco donde reside el registro que queremos modificar
 en cada momento, con lo cual este par de instrucciones se encuentra con
 frecuencia en todo el código. La pagina 16 del Datasheet indica los valores a
 usar para cambiar los bancos de memoria.
+
+
+### Configuración de los puertos de entrada/salida
+
+    ;;; Configuración de puertos IO
+    ;;; Datasheet pagina 41
+    ; El puerto A es de entrada
+    MOVLW   B'00111111'
+    MOVWF   TRISA
+    ; El puerto B es de entrada
+    MOVLW   B'00000000'
+    MOVWF   TRISB
+    ; Puerto C: pin TX es salida, pin RX es entrada
+    MOVLW   B'10001111'
+    MOVWF   TRISC
+
+El **puerto A** contiene los pines del conversor ADC por lo que se configuran
+como entradas. El **puerto B** se configura como salida para, opcionalmente,
+colocar LEDs que sirvan como indicadores visuales. El **puerto C** contiene los
+pines **TX** y **RX** usados para la comunicación UART con lo cual se configuran
+para salida y entrada respectivamente.
