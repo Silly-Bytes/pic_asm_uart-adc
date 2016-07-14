@@ -4,53 +4,53 @@
 ; Datasheet pagina 17, figura 2-3
 PORTA      EQU 0x05
 PORTB      EQU 0x06
-TRISA      EQU H'85'
-TRISB      EQU H'86'
-TRISC      EQU H'87'
-RP0        EQU H'05'
-RP1        EQU H'06'
-STATUS     EQU H'03'
-DATO       EQU H'21'
-ADCON0     EQU H'1F'
-ADCON1     EQU H'9F'
-PIR1       EQU H'0C'
-INTCON     EQU H'0B'
-PIE1       EQU H'8C'
-ADRESH     EQU H'1E'
-ADRESL     EQU H'9E'
-SPBRG      EQU H'99'
-TXSTA      EQU H'98'
-RCSTA      EQU H'18'
-TXREG      EQU H'19'
-RCREG      EQU H'1A'
-OPTION_REG EQU H'81'
-IRP        EQU H'07'
+TRISA      EQU 0x85
+TRISB      EQU 0x86
+TRISC      EQU 0x87
+RP0        EQU 0x05
+RP1        EQU 0x06
+STATUS     EQU 0x03
+DATO       EQU 0x21
+ADCON0     EQU 0x1F
+ADCON1     EQU 0x9F
+PIR1       EQU 0x0C
+INTCON     EQU 0x0B
+PIE1       EQU 0x8C
+ADRES0x    EQU H'1E
+ADRESL     EQU 0x9E
+SPBRG      EQU 0x99
+TXSTA      EQU 0x98
+RCSTA      EQU 0x18
+TXREG      EQU 0x19
+RCREG      EQU 0x1A
+OPTION_REG EQU 0x81
+IRP        EQU 0x07
 
-VAR1       EQU H'20'
-VAR2       EQU H'A0'
-VAR3       EQU H'110'
-VAR4       EQU H'190'
+VAR1       EQU 0x20
+VAR2       EQU 0xA0
+VAR3       EQU 0x110
+VAR4       EQU 0x190
 
 ; Inicialización de registros de direccionamiento indirecto
 ; Datasheet pagina 31
-INDF       EQU H'0'
-FSR        EQU H'04'
+INDF       EQU 0x0
+FSR        EQU 0x04
 
 ; Variables propias a usarse en el programa
 LECTURA1   EQU D'40'
-LAZOS1     EQU H'7F'
+LAZOS1     EQU 0x7F
 LECTURA2   EQU D'40'
-LAZOS2     EQU H'7E'
+LAZOS2     EQU 0x7E
 LECTURA3   EQU D'48'
-LAZOS3     EQU H'7D'
+LAZOS3     EQU 0x7D
 LECTURA4   EQU D'48'
-LAZOS4     EQU H'7C'
+LAZOS4     EQU 0x7C
 GRU        EQU 0x15
 MED        EQU 0x20
 FIN        EQU 0x20
-REG1       EQU H'22'
-REG2       EQU H'23'
-REG3       EQU H'24'
+REG1       EQU 0x22
+REG2       EQU 0x23
+REG3       EQU 0x24
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
