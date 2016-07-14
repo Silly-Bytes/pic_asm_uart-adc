@@ -33,6 +33,8 @@ http://ww1.microchip.com/downloads/en/DeviceDoc/39582C.pdf
 El código completo [se encuentra
 aquí](https://github.com/Silly-Bytes/pic_asm_uart-adc/blob/master/code.asm).
 
+## Declaración de registros y variables
+
 Empezamos examinando y explicando el código:
 
     list p=16f876A
@@ -71,3 +73,29 @@ del microcontrolador. En estas lineas declaramos los nombres y direcciones (en
 hexadecimal) de los mismos para usarlos en el código con más facilidad. La
 palabra `EQU` asigna el nombre de la izquierda al valor de la derecha. Para
 declarar un valor hexadecimal se usa el prefijo `0x`.
+
+
+## Inicialización y configuración
+
+    INIT
+        org 0
+
+        ; Selección BANCO 1
+        ; Datasheet pagina 16, sección 2.2
+        BSF STATUS,RP0
+        BCF STATUS,RP1
+
+La palabra `INIT` es la declaración de una *etiqueta* y se puede cambiar por
+cualquier palabra que se desee, es el nombre con el cual nos vamos a referir a
+esta sección de código desde otras partes del programa y que podremos invocar
+usando dicha etiqueta.
+
+La directiva `org 0` indica al enlazador que el código a continuación deberá ser
+colocado desde la dirección **0** de la memoria de programa.
+
+Las instrucciones `BSF STATUS,RP0` y `BCF STATUS,RP1` hacen un cambio al **banco
+de memoria 1**. La memoria del microcontrolador está dividida en **bancos** y es
+necesario *cambiarnos* al banco donde reside el registro que queremos modificar
+en cada momento, con lo cual este par de instrucciones se encuentra con
+frecuencia en todo el código. La pagina 16 del Datasheet indica los valores a
+usar para cambiar los bancos de memoria.
