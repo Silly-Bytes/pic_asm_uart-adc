@@ -13,10 +13,10 @@ El objetivo es el siguiente:
 Se desea usar el microcontrolador para llevar a cabo la conversión
 analógica-digital de una tensión variable (un LDR o un potenciómetro por
 ejemplo) y transmitir el resultado usando la UART. Además debe ser posible
-recibir por la UART un par de bytes que deben alterar la configuración del
-Conversor Análogo Digital (DAC) interno del microcontrolador para, por ejemplo,
-cambiar el canal de entrada de la señal analógica o modificar la velocidad del
-reloj de conversión.
+recibir por la UART un byte que debe alterar la configuración del Conversor
+Análogo Digital (DAC) interno del microcontrolador para, por ejemplo, cambiar el
+canal de entrada de la señal analógica o modificar la velocidad del reloj de
+conversión.
 
 El código ha sido ensamblado con el ensamblador de GNU *gpasm* del juego de
 herramientas [gputils](http://gputils.sourceforge.net/), pero debería ser
@@ -129,6 +129,8 @@ De esta forma para colocar un valor arbitrario en un registro es necesario
 colocarlo primero en el registro de trabajo **W** usando la instrucción `MOVLW`
 y luego moverlo al registro deseado con la instrucción `MOVWF`.
 
+Para indicar que el valor usado es **binario** se usa como prefijo una **B**.
+
 El **puerto A** contiene los pines del conversor ADC por lo que se configuran
 como entradas. El **puerto B** se configura como salida para, opcionalmente,
 colocar LEDs que sirvan como indicadores visuales. El **puerto C** contiene los
@@ -171,7 +173,7 @@ lo cual es necesario hacer el *cambio de banco* en cada paso.
     MOVWF   SPBRG
 
 
-El registro **SPBRG** o "Generador de baudios" recibe un valor (listado en la
+El registro `SPBRG` o "Generador de baudios" recibe un valor (listado en la
 tabla) dependiendo de la velocidad a la cual nos queremos comunicar, de la
 frecuencia a la que se use el microcontrolador y el porcentaje de error que
 estamos dispuestos a tolerar en la comunicación. Dada la frecuencia de un reloj
@@ -195,8 +197,134 @@ activar los mecanismos de transmisión.
     ; Registro de recepción
     MOVLW   B'10010000'
     MOVWF   RCSTA
+    BSF RCSTA,4
 
 El registro `RCSTA` (en el banco 0) de la pagina 112 se configura para una
 comunicación de 8 bits, asíncrona y se activan los mecanismos de recepción.
 
 
+## Programa principal
+
+El programa principal deberá esperar a que un byte para configurar el conversor
+ADC llegue por la UART, tomar un valor de tensión y llevar a cabo la conversión
+para finalmente transmitir el resultado por la UART enviando primero el byte
+bajo `ADRESL` y luego el byte alto `ADRESH`.
+
+
+### Configuración
+
+    ;;; Esperar primer byte de configuración
+    ESPERAR_CONFIG
+        BTFSS   PIR1,5
+        GOTO    ESPERAR_CONFIG
+
+El pin numero `5` del registro `PIR1` indicará que un dato ha llegado por la
+UART.
+
+La instrucción `BTFSS` verificará el bit numero `5` del registro `PIR1` y se
+**saltará** la siguiente instrucción si el bit es igual a `1`. De esta forma
+mientras no llegue el dato necesario la instrucción `GOTO` se ejecuta y el
+microcontrolador se queda en un bucle, pero cuando un dato es recibido la
+instrucción `GOTO` es **saltada** y el programa puede continuar.
+
+
+        ; Colocar byte recibido en la configuración ADCON0 del conversor ADC
+        BCF   STATUS,RP0
+        BCF   STATUS,RP1
+        MOVF  RCREG,W
+        MOVWF ADCON0
+        ; Vaciar el bit de recepción
+        BCF   PIR1,6
+
+El registro `RCREG` contiene el dato recibido por la UART, el cual se coloca en
+el registro de trabajo `W` para luego colocarlo en el registro de configuración
+`ADCON0` del conversor ADC. Así el conversor quedará configurado con el canal y
+velocidad que se haya indicado en el dato que recibió y se puede proceder a la
+conversión. Usando la instrucción `BCF` se vacía el contenido del bit numero `6`
+del registro `PIR1` para indicar que hemos leído el dato recibido.
+
+
+### Conversión
+
+    ;;; Esperar tiempo de adquisición e iniciar conversión
+    CONVERTIR
+        ; Instrucciones de espera
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+
+Antes de realizar la conversión es necesario esperar un tiempo para que el
+microcontrolador pueda recoger el valor de tensión en el pin, según la pagina
+129 del Datasheet. Se puede lograr esto usando la instrucción `NOP`, aunque
+sería más adecuado usar un bucle que espere un tiempo más prudente, pero se
+mantiene de esta forma por simplicidad.
+
+
+        ; Activar conversor
+        BSF ADCON0,2
+
+Activando el bit numero `2` del registro `ADCON0` usando la instrucción `BSF`
+inicia la conversión.
+
+    ESPERAR_CONVERSION
+        BTFSS   PIR1,6
+        GOTO    ESPERAR_CONVERSION
+        BCF PIR1,6
+
+La conversión toma tiempo, por lo que se entra en un bucle hasta que el bit
+numero 6 del registro `PIR1` indique que se ha finalizado.
+
+
+### Transmitir el resultado
+
+    ; Transmitir el resultado mediante la UART
+    TRANSMITIR_RESULTADO
+        BSF STATUS,RP0
+        BCF STATUS,RP1
+        ; Transmitir byte bajo del resultado (ADRESL)
+        MOVF    ADRESL,W
+        BCF STATUS,RP0
+        BCF STATUS,RP1
+        MOVWF   TXREG
+        BSF STATUS,RP0
+        BCF STATUS,RP1
+
+El resultado de la conversión se encuetra repartido en dos bytes: `ADRESL` y
+`ADRESH`.
+
+Colocamos el byte `ADRESL` en el registro de trabajo `W` para luego colocarlo en
+el registro `TXREG` lo cual causará que sea transmitido usando al UART.
+
+
+    ; Esperar que el primer byte se transmita
+    ESPERAR_1
+        BTFSS   TXSTA,1
+        GOTO    ESPERAR_1
+        BCF STATUS,RP0
+        BCF STATUS,RP1
+        ; Transmitir byte alto del resultado (ADRESH)
+        MOVF    ADRESH,W
+        MOVWF   TXREG
+        BSF STATUS,RP0
+        BCF STATUS,RP1
+
+    ; Esperar que el segundo byte se transmita
+    ESPERAR_2
+        BTFSS   TXSTA,1
+        GOTO    ESPERAR_2
+        BCF TXSTA,1
+
+El bit numero `1` del registro `TXSTA` indica que el dato se ha transmitido.
+
+Esperamos en un bucle hasta que el byte bajo termine de ser transmitido y
+podemos repetirlo para el byte alto.
+
+
+    GOTO    CONVERTIR
+
+    END
+
+Finalmente se salta a la etiqueta `CONVERTIR` para convertir y transmitir datos
+infinitamente. El programa se termina con la directiva `END`.
