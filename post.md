@@ -119,6 +119,16 @@ usar para cambiar los bancos de memoria.
     MOVLW   B'10001111'
     MOVWF   TRISC
 
+La instrucción `MOVLW` se usa para mover un valor **literal** al registro de
+trabajo **W**.
+
+La instrucción `MOVWF` se usa para mover el valor que se encuentra en el
+registro de trabajo **W** a un registro.
+
+De esta forma para colocar un valor arbitrario en un registro es necesario
+colocarlo primero en el registro de trabajo **W** usando la instrucción `MOVLW`
+y luego moverlo al registro deseado con la instrucción `MOVWF`.
+
 El **puerto A** contiene los pines del conversor ADC por lo que se configuran
 como entradas. El **puerto B** se configura como salida para, opcionalmente,
 colocar LEDs que sirvan como indicadores visuales. El **puerto C** contiene los
@@ -138,3 +148,55 @@ La configuración del conversor ADC será recibida usando la comunicación UART,
 sin embargo es necesario configurar de antemano que pines serán analógicos y que
 pines serán digitales. No usaremos pines digitales en este puerto, así que se
 configuran todos como analógicos según la tabla de la pagina 128 del Datasheet.
+
+
+### Configuración de la UART
+
+La comunicación serial UART puede usarse para comunicar el microcontrolador con
+una computadora u otro dispositivo como un modulo bluetooth que a su vez se
+puede usar para comunicar con un teléfono inteligente. El dispositivo con el que
+se comunique es irrelevante para este post y el código es el mismo en cualquier
+caso.
+
+Nótese que los registros que se configuran se encuentran en bancos distintos con
+lo cual es necesario hacer el *cambio de banco* en cada paso.
+
+    ;;; Configuración UART
+    ; Banco 1
+    BSF STATUS,RP0
+    BCF STATUS,RP1
+    ; 19200 Baudios
+    ; Datasheet pagina 114, tabla 10-4
+    MOVLW   .12
+    MOVWF   SPBRG
+
+
+El registro **SPBRG** o "Generador de baudios" recibe un valor (listado en la
+tabla) dependiendo de la velocidad a la cual nos queremos comunicar, de la
+frecuencia a la que se use el microcontrolador y el porcentaje de error que
+estamos dispuestos a tolerar en la comunicación. Dada la frecuencia de un reloj
+de 4Mhz usado y la necesidad de una comunicación a 19200 Baudios, la tabla
+indica usar un valor **decimal** de `12`. Para indicar que el valor usado es
+**decimal** se usa como prefijo un punto `.`.
+
+
+    ; Registro de transmisión
+    MOVLW   B'10100100'
+    MOVWF   TXSTA
+
+El registro `TXSTA` de la pagina 111 se configura con los valores adecuados para
+configurar una comunicación de 8 bits de alta velocidad, asíncrona y para
+activar los mecanismos de transmisión.
+
+
+    ; Banco 0
+    BCF STATUS,RP0
+    BCF STATUS,RP1
+    ; Registro de recepción
+    MOVLW   B'10010000'
+    MOVWF   RCSTA
+
+El registro `RCSTA` (en el banco 0) de la pagina 112 se configura para una
+comunicación de 8 bits, asíncrona y se activan los mecanismos de recepción.
+
+
