@@ -124,3 +124,17 @@ como entradas. El **puerto B** se configura como salida para, opcionalmente,
 colocar LEDs que sirvan como indicadores visuales. El **puerto C** contiene los
 pines **TX** y **RX** usados para la comunicación UART con lo cual se configuran
 para salida y entrada respectivamente.
+
+
+### Configuración del conversor ADC
+
+    ;;; Configuración de puerto ADC
+    ; Todas las entradas son analógicas
+    ; Datasheet pagina 128
+    MOVLW   B'10000000'
+    MOVWF   ADCON1
+
+La configuración del conversor ADC será recibida usando la comunicación UART,
+sin embargo es necesario configurar de antemano que pines serán analógicos y que
+pines serán digitales. No usaremos pines digitales en este puerto, así que se
+configuran todos como analógicos según la tabla de la pagina 128 del Datasheet.

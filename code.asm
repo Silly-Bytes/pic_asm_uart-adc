@@ -70,7 +70,7 @@ INIT
     ; El puerto A es de entrada
     MOVLW   B'00111111'
     MOVWF   TRISA
-    ; El puerto B es de entrada
+    ; El puerto B es de salida
     MOVLW   B'00000000'
     MOVWF   TRISB
     ; Puerto C: pin TX es salida, pin RX es entrada
@@ -79,7 +79,7 @@ INIT
 
     ;;; Configuración de puerto ADC
     ; Todas las entradas son analógicas
-    ; Datasheet pagina 127
+    ; Datasheet pagina 128
     MOVLW   B'10000000'
     MOVWF   ADCON1
 
