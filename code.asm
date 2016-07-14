@@ -108,6 +108,11 @@ INIT
 
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Programa principal
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;;; Esperar primer byte de configuración
 ESPERAR_CONFIG
     BTFSS   PIR1,5
