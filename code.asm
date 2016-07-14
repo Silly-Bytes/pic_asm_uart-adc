@@ -99,115 +99,75 @@ INIT
     BCF STATUS,RP0
     BCF STATUS,RP1
     ; Registro de recepción
-    MOVLW   B'10010000'
-    MOVWF   RCSTA
+    MOVLW B'10010000'
+    MOVWF RCSTA
+    BSF   RCSTA,4
 
 
-;=======  RECEPCION SERIAL ==========================
 
-    BSF RCSTA,4     ;HABILITA RECEPCION SETEANDO BIT CREN
+;;; Esperar primer byte de configuración
+ESPERAR_CONFIG
+    BTFSS   PIR1,5
+    GOTO    ESPERAR_CONFIG
 
-LLENAS
-    BTFSS   PIR1,5      ;PRUEBA EL BIT RCIF=1 DE RECEPCION COMPLETA
-    GOTO    LLENAS      ;PERMANECE EN EL LAZO HASTA QUE INGRESE EL DATO
+    ; Colocar byte recibido en la configuración ADCON0 del conversor ADC
+    BCF   STATUS,RP0
+    BCF   STATUS,RP1
+    MOVF  RCREG,W
+    MOVWF ADCON0
+    ; Vaciar el bit de recepción
+    BCF   PIR1,6
 
-    MOVF    RCREG,W     ;SE TRANSFIERE EL DATO RECIBIDO HACIA EL W
-    MOVWF   PORTB       ;SEGUIMOS EN EL BANK0
 
 
-;**** realizar una conversion A/D solo luego de  ingresar un dato****
-;============== PREPARA CONVERSION A/D ==========================
+;;; Esperar tiempo de adquisición e iniciar conversión
+CONVERTIR
+    ; Instrucciones de espera
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    ; Activar conversor
+    BSF ADCON0,2
 
-;============== seleccion de canal analogico usando RCREG ==========
+ESPERAR_CONVERSION
+    BTFSS   PIR1,6
+    GOTO    ESPERAR_CONVERSION
+    BCF PIR1,6
 
-    BCF STATUS,RP0
-    BCF STATUS,RP1  ;BANK0;FOSCI/8..CANAL segun RCREG..A/D OPERANDO
 
-    MOVWF   ADCON0      ;se transfiere desde W hacia ADCON0
-                            ;valores permitidos son 65 73 81 89 97 105 113 121
-    BCF PIR1,6      ;BORRA ADIF DEL REGISTRO PIR1
-
-;===== FIN DE LA CONFIGURACION DEL A/D ===============
-
-    BSF STATUS,RP0
-    BCF STATUS,RP1  ;BANK1
-    BSF INTCON,7
-    BSF PIE1,6      ;COLOCA 1 EN ADIE Y GIE
-
-    BCF STATUS,RP0
-    BCF STATUS,RP1  ;BANK 0
-
-    BSF ADCON0,2        ;INICIA LA CONVERSION
-
-ESPER1  BTFSS   PIR1,6  ;ESPERA FIN DE CONVERSION
-    GOTO    ESPER1
-
-;********************  FIN DE LA CONVERSION A/D *********
-
-    BCF PIR1,6      ;BORRA ADIF
-;==========================================================
-;===================== TRANSMISION SERIAL ===============================
-
+; Transmitir el resultado mediante la UART
+TRANSMITIR_RESULTADO
     BSF STATUS,RP0
     BCF STATUS,RP1
-    MOVF    ADRESL,W    ;CARGARA UN BYTE BAJO
+    ; Transmitir byte bajo del resultado (ADRESL)
+    MOVF    ADRESL,W
     BCF STATUS,RP0
-    BCF STATUS,RP1  ;BANK0
-
-    MOVWF   TXREG       ;TRANSMITE BYTE BAJO
-
-    BSF STATUS,RP0
-    BCF STATUS,RP1  ;BANK1
-ESPE1
-    BTFSS   TXSTA,1     ;PRUEBA TRMT,SI BUFFER ESTA VACIO
-    GOTO    ESPE1
-;===============================================================
-    BCF STATUS,RP0
-    BCF STATUS,RP1  ;BANK0
-
-    MOVF    ADRESH,W        ;SE TRANSMITIRA EL BYTE ALTO
+    BCF STATUS,RP1
     MOVWF   TXREG
-
     BSF STATUS,RP0
-    BCF STATUS,RP1  ;BANK1
+    BCF STATUS,RP1
 
-ESPE11
+; Esperar que el primer byte se transmita
+ESPERAR_1
     BTFSS   TXSTA,1
-    GOTO    ESPE11
+    GOTO    ESPERAR_1
+    BCF STATUS,RP0
+    BCF STATUS,RP1
+    ; Transmitir byte alto del resultado (ADRESH)
+    MOVF    ADRESH,W
+    MOVWF   TXREG
+    BSF STATUS,RP0
+    BCF STATUS,RP1
+
+; Esperar que el segundo byte se transmita
+ESPERAR_2
+    BTFSS   TXSTA,1
+    GOTO    ESPERAR_2
     BCF TXSTA,1
 
-    ;=========== FIN DE TRANSMISION DE LOS DOS BYTES ===============
 
-
-    GOTO    INICIO
-
-DEMORA          ;ASEGURARSE DE ESTAR EN EL BANK0
-    MOVLW   GRU ;GRU,REG,ETC ESTAN EN BANK0
-    MOVWF   REG1
-DEM3
-    MOVLW   MED
-    MOVWF   REG2
-DEM2
-    MOVLW   FIN
-    MOVWF   REG3
-DEM1
-    DECFSZ  REG3
-    GOTO DEM1
-    DECFSZ  REG2
-    GOTO DEM2
-    DECFSZ  REG1
-    GOTO    DEM3
-    RETLW   0
-
-WAIT
-    BCF STATUS,RP0
-    BCF STATUS,RP1
-    MOVLW   FIN
-    MOVWF   REG3
-CHANCE
-    DECFSZ  REG3
-    GOTO    CHANCE
-    RETLW   0
-
+    GOTO    CONVERTIR
 
     END
